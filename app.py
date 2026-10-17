@@ -14,6 +14,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 # ---------------------------------------------------------------- settings
 DEFAULT_MODELS = ["gemini-flash-latest", "gemini-3.6-flash", "gemini-2.5-flash"]
 MAX_SIDE = 1024            # image is resized so it loads fast on mobile
+CREATOR = "Azizul & Habiba"        # <<< এখানে নিজের নাম বদলাতে পারো
 MAX_RUNS_PER_SESSION = 10  # protects your free quota from abuse
 
 FONT_URLS = [
@@ -29,7 +30,7 @@ STYLES = {
     "👩 দেশি আম্মু": "like a desi Bangladeshi mom commenting on it",
 }
 
-st.set_page_config(page_title="বাংলা Meme Maker", page_icon="😂", layout="centered")
+st.set_page_config(page_title="Khela Hobe", page_icon="😂", layout="centered")
 
 st.markdown(
     """
@@ -174,8 +175,9 @@ def make_meme(base_img, top, bottom, font_path):
 
 
 # ---------------------------------------------------------------- UI
-st.title("😂 বাংলা Meme Maker")
+st.title("😂 Khela Hobe")
 st.caption("ছবি দাও, AI বাংলায় মজার caption লিখে meme বানিয়ে দেবে।")
+st.markdown(f"<p style='margin-top:-0.5rem;opacity:.8'>👨‍💻 Made by <b>{CREATOR}</b></p>", unsafe_allow_html=True)
 
 font_path = get_font_path()
 if font_path is None:
@@ -249,3 +251,10 @@ if source is not None:
         )
 else:
     st.info("শুরু করতে একটা ছবি upload করো বা camera দিয়ে তোলো।")
+
+st.markdown("---")
+st.markdown(
+    f"<div style='text-align:center;opacity:.75;padding:.5rem 0 1rem'>"
+    f"Khela Hobe 😂<br>Developed with ❤️ by <b>{CREATOR}</b></div>",
+    unsafe_allow_html=True,
+)
