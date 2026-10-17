@@ -236,11 +236,23 @@ st.markdown(
         align-items: center !important;
         gap: .6rem !important;
         width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
       }
       div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
         width: auto !important;
+        max-width: 100% !important;
         min-width: fit-content !important;
         flex: 0 0 auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+      }
+      div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
+        margin-right: 0 !important;
+        flex-shrink: 0 !important;
       }
     </style>
     """,
