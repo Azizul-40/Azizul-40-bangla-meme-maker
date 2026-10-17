@@ -199,8 +199,10 @@ st.markdown(
         font-size: .9rem;
       }
 
-      div.st-key-make_row div[data-testid="stVerticalBlock"],
-      div.st-key-dl_row div[data-testid="stVerticalBlock"] {
+      div.st-key-make_row > div,
+      div.st-key-dl_row > div,
+      div.st-key-make_row [data-testid="stVerticalBlock"],
+      div.st-key-dl_row [data-testid="stVerticalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -209,8 +211,8 @@ st.markdown(
         gap: 8px !important;
         width: 100% !important;
       }
-      div.st-key-make_row div[data-testid="stVerticalBlock"] > div[data-testid="element-container"],
-      div.st-key-dl_row div[data-testid="stVerticalBlock"] > div[data-testid="element-container"] {
+      div.st-key-make_row [data-testid="stVerticalBlock"] > div,
+      div.st-key-dl_row [data-testid="stVerticalBlock"] > div {
         width: auto !important;
         flex: 0 0 auto !important;
       }
