@@ -195,6 +195,18 @@ st.markdown(
         font-size: .9rem;
       }
 
+      div[data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
+        gap: 8px !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+      }
+      div[data-testid="stHorizontalBlock"] div[data-testid="column"] {
+        width: auto !important;
+        flex: 0 0 auto !important;
+        min-width: 0 !important;
+      }
+
       .stTabs [data-baseweb="tab"] {
         font-weight: 600;
         border-radius: 10px 10px 0 0;
