@@ -168,11 +168,20 @@ st.markdown(
         color: white;
       }
       .stButton>button[kind="secondary"] {
-        width: auto;
+        width: auto !important;
         padding: .4rem .9rem;
         font-size: .8rem;
         background: #E8352B;
         color: white;
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        flex-shrink: 0 !important;
+      }
+      .stButton>button[kind="secondary"] p {
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
       }
       .stButton>button[kind="secondary"]:hover {
         background: #C92A21;
@@ -219,7 +228,7 @@ st.markdown(
       }
       div[data-testid="stHorizontalBlock"]:has(button[kind="secondary"]) > div[data-testid="column"] {
         width: auto !important;
-        min-width: 0 !important;
+        min-width: fit-content !important;
         flex: 0 0 auto !important;
       }
     </style>
