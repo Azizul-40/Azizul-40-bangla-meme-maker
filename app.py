@@ -53,7 +53,8 @@ TEXT = {
         "your_image": "তোমার ছবি",
         "make_meme_btn": "✨ Meme বানাও",
         "thinking": "Generating...",
-        "delete_photo": "🗑️ ছবি মুছে ফেলো",
+        "delete_photo": "🗑️ Delete",
+        "delete_meme": "🗑️ Delete",
         "error_prefix": "কিছু একটা সমস্যা হয়েছে, একটু পরে আবার চেষ্টা করো।",
         "limit_warning": "এই session-এর limit শেষ। পেজ refresh করে আবার চেষ্টা করো।",
         "your_meme": "তোমার Meme",
@@ -84,7 +85,8 @@ TEXT = {
         "your_image": "Your photo",
         "make_meme_btn": "✨ Make meme",
         "thinking": "Generating...",
-        "delete_photo": "🗑️ Delete photo",
+        "delete_photo": "🗑️ Delete",
+        "delete_meme": "🗑️ Delete",
         "error_prefix": "Something went wrong, try again in a bit.",
         "limit_warning": "This session's limit is over. Refresh the page and try again.",
         "your_meme": "Your meme",
@@ -144,19 +146,32 @@ st.markdown(
       }
 
       .stButton>button, .stDownloadButton>button {
-        width: 100%;
-        padding: .8rem 1rem;
-        font-size: 1.05rem;
         font-weight: 600;
-        border-radius: 12px;
+        border-radius: 10px;
         border: none;
-        background: linear-gradient(135deg, #FF8A3D 0%, #FF5B2E 100%);
-        color: white;
         transition: transform .15s ease, box-shadow .15s ease;
       }
-      .stButton>button:hover, .stDownloadButton>button:hover {
+      .stButton>button[kind="primary"], .stDownloadButton>button[kind="primary"] {
+        width: auto;
+        padding: .6rem 1.3rem;
+        font-size: .95rem;
+        background: linear-gradient(135deg, #FF8A3D 0%, #FF5B2E 100%);
+        color: white;
+      }
+      .stButton>button[kind="primary"]:hover, .stDownloadButton>button[kind="primary"]:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 14px rgba(255, 91, 46, 0.35);
+        color: white;
+      }
+      .stButton>button[kind="secondary"] {
+        width: auto;
+        padding: .4rem .9rem;
+        font-size: .8rem;
+        background: #E8352B;
+        color: white;
+      }
+      .stButton>button[kind="secondary"]:hover {
+        background: #C92A21;
         color: white;
       }
 
@@ -409,18 +424,22 @@ photo_bytes = st.session_state.get("photo_bytes")
 
 if photo_bytes is not None:
     base_img = prepare_image(photo_bytes)
-    img_col, del_col = st.columns([5, 1])
-    with img_col:
-        st.image(base_img, caption=T["your_image"], use_container_width=True)
-    with del_col:
-        if st.button(T["delete_photo"], key="delete_photo_btn"):
+    st.image(base_img, caption=T["your_image"], use_container_width=True)
+
+    left = MAX_RUNS_PER_SESSION - st.session_state.runs
+    make_col, make_del_col = st.columns([3, 1])
+    with make_col:
+        make_clicked = st.button(
+            T["make_meme_btn"], type="primary", disabled=left <= 0, key="make_meme_btn"
+        )
+    with make_del_col:
+        if st.button(T["delete_photo"], type="secondary", key="delete_photo_btn"):
             st.session_state.pop("photo_bytes", None)
             st.session_state.pop("file_id", None)
             st.session_state.pop("memes", None)
             st.rerun()
 
-    left = MAX_RUNS_PER_SESSION - st.session_state.runs
-    if st.button(T["make_meme_btn"], type="primary", disabled=left <= 0):
+    if make_clicked:
         with st.spinner(T["thinking"]):
             try:
                 st.session_state.memes = get_captions(base_img, style_hint, extra)
@@ -451,12 +470,19 @@ if photo_bytes is not None:
 
         out = io.BytesIO()
         final.save(out, "PNG")
-        st.download_button(
-            T["download_btn"],
-            data=out.getvalue(),
-            file_name="bangla_meme.png",
-            mime="image/png",
-        )
+        dl_col, dl_del_col = st.columns([3, 1])
+        with dl_col:
+            st.download_button(
+                T["download_btn"],
+                data=out.getvalue(),
+                file_name="bangla_meme.png",
+                mime="image/png",
+                type="primary",
+            )
+        with dl_del_col:
+            if st.button(T["delete_meme"], type="secondary", key="delete_meme_btn"):
+                st.session_state.pop("memes", None)
+                st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 else:
     st.info(T["start_info"])
