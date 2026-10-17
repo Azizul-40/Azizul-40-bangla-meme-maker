@@ -7,6 +7,7 @@ import re
 import urllib.request
 
 import streamlit as st
+import streamlit.components.v1 as components
 from google import genai
 from google.genai import types
 from PIL import Image, ImageDraw, ImageFont, ImageOps
@@ -199,19 +200,6 @@ st.markdown(
         font-size: .9rem;
       }
 
-      div:has(> .khb-btnrow-marker) + div {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        gap: 8px !important;
-        width: 100% !important;
-      }
-      div:has(> .khb-btnrow-marker) + div > div {
-        width: auto !important;
-        flex: 0 0 auto !important;
-      }
 
       .stTabs [data-baseweb="tab"] {
         font-weight: 600;
@@ -368,6 +356,70 @@ def make_meme(base_img, top, bottom, font_path):
     return img
 
 
+def pair_buttons_row(label_a: str, label_b: str):
+    """
+    Streamlit mobile-এ st.columns নিজে থেকে vertically stack করে ফেলে, CSS দিয়ে
+    সেটা reliably override করা যাচ্ছিল না। st.markdown-এর ভেতরে <script> বসালে
+    সেটা browser আদৌ run করে না (innerHTML দিয়ে বসানো script কখনো execute হয়
+    না) — তাই components.v1.html দিয়ে একটা ছোট iframe বানিয়ে, তার ভেতর থেকে
+    window.parent.document ধরে মূল পেজের দুটো বাটন (visible text দিয়ে) খুঁজে,
+    তাদের common parent-কে flex-row বানিয়ে পাশাপাশি বসিয়ে দেওয়া হচ্ছে।
+    MutationObserver + কিছুক্ষণ ধরে retry রাখা হয়েছে, কারণ Streamlit rerun হলে
+    React বাটনগুলো নতুন করে বসায় এবং inline style মুছে যেতে পারে।
+    """
+    safe_a = label_a.replace("\\", "\\\\").replace("'", "\\'")
+    safe_b = label_b.replace("\\", "\\\\").replace("'", "\\'")
+    components.html(
+        f"""
+        <script>
+        (function() {{
+            const labelA = '{safe_a}';
+            const labelB = '{safe_b}';
+            const doc = window.parent.document;
+
+            function pair() {{
+                const buttons = Array.from(doc.querySelectorAll('button'));
+                const btnA = buttons.find(b => b.innerText.trim() === labelA);
+                const btnB = buttons.find(b => b.innerText.trim() === labelB);
+                if (!btnA || !btnB) return false;
+                const ancestorsA = new Set();
+                let a = btnA;
+                while (a) {{ ancestorsA.add(a); a = a.parentElement; }}
+                let common = btnB;
+                while (common && !ancestorsA.has(common)) {{ common = common.parentElement; }}
+                if (!common) return false;
+                common.style.setProperty('display', 'flex', 'important');
+                common.style.setProperty('flex-direction', 'row', 'important');
+                common.style.setProperty('flex-wrap', 'nowrap', 'important');
+                common.style.setProperty('justify-content', 'space-between', 'important');
+                common.style.setProperty('align-items', 'center', 'important');
+                common.style.setProperty('gap', '8px', 'important');
+                common.style.setProperty('width', '100%', 'important');
+                Array.from(common.children).forEach(ch => {{
+                    ch.style.setProperty('width', 'auto', 'important');
+                    ch.style.setProperty('flex', '0 0 auto', 'important');
+                    ch.style.setProperty('min-width', '0', 'important');
+                }});
+                return true;
+            }}
+
+            let tries = 0;
+            const interval = setInterval(function() {{
+                pair();
+                tries += 1;
+                if (tries > 40) clearInterval(interval);
+            }}, 250);
+
+            const observer = new MutationObserver(function() {{ pair(); }});
+            observer.observe(doc.body, {{ childList: true, subtree: true }});
+        }})();
+        </script>
+        """,
+        height=0,
+        width=0,
+    )
+
+
 # ---------------------------------------------------------------- UI
 _lang_col1, _lang_col2 = st.columns([3, 1])
 with _lang_col2:
@@ -422,11 +474,17 @@ style_hint = STYLES[style_choice][2]
 
 extra = st.text_input(T["extra_label"], placeholder=T["extra_placeholder"])
 
+if "uploader_version" not in st.session_state:
+    st.session_state.uploader_version = 0
+_uv = st.session_state.uploader_version
+
 tab_up, tab_cam = st.tabs([T["tab_upload"], T["tab_cam"]])
 with tab_up:
-    uploaded = st.file_uploader(T["uploader_label"], type=["jpg", "jpeg", "png", "webp"], key="uploader")
+    uploaded = st.file_uploader(
+        T["uploader_label"], type=["jpg", "jpeg", "png", "webp"], key=f"uploader_{_uv}"
+    )
 with tab_cam:
-    shot = st.camera_input(T["cam_label"], key="camera")
+    shot = st.camera_input(T["cam_label"], key=f"camera_{_uv}")
 
 # নতুন ছবি এলেই session_state-এ bytes আকারে সেভ করে রাখি, যাতে পরে
 # category/style বদলালে (rerun হলেও) ছবিটা হারিয়ে না যায়
@@ -445,7 +503,6 @@ if photo_bytes is not None:
     st.image(base_img, caption=T["your_image"], use_container_width=True)
 
     left = MAX_RUNS_PER_SESSION - st.session_state.runs
-    st.markdown('<div class="khb-btnrow-marker"></div>', unsafe_allow_html=True)
     make_col, make_del_col = st.columns([3, 1])
     with make_col:
         make_clicked = st.button(
@@ -453,10 +510,12 @@ if photo_bytes is not None:
         )
     with make_del_col:
         delete_photo_clicked = st.button(T["delete_photo"], type="secondary", key="delete_photo_btn")
+    pair_buttons_row(T["make_meme_btn"], T["delete_photo"])
     if delete_photo_clicked:
         st.session_state.pop("photo_bytes", None)
         st.session_state.pop("file_id", None)
         st.session_state.pop("memes", None)
+        st.session_state.uploader_version += 1
         st.rerun()
 
     if make_clicked:
@@ -490,7 +549,6 @@ if photo_bytes is not None:
 
         out = io.BytesIO()
         final.save(out, "PNG")
-        st.markdown('<div class="khb-btnrow-marker"></div>', unsafe_allow_html=True)
         dl_col, dl_del_col = st.columns([3, 1])
         with dl_col:
             st.download_button(
@@ -502,6 +560,7 @@ if photo_bytes is not None:
             )
         with dl_del_col:
             delete_meme_clicked = st.button(T["delete_meme"], type="secondary", key="delete_meme_btn")
+        pair_buttons_row(T["download_btn"], T["delete_meme"])
         if delete_meme_clicked:
             st.session_state.pop("memes", None)
             st.rerun()
