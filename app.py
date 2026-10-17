@@ -375,14 +375,7 @@ if "GEMINI_API_KEY" not in st.secrets:
 if "runs" not in st.session_state:
     st.session_state.runs = 0
 
-tab_up, tab_cam = st.tabs([T["tab_upload"], T["tab_cam"]])
-with tab_up:
-    uploaded = st.file_uploader(T["uploader_label"], type=["jpg", "jpeg", "png", "webp"])
-with tab_cam:
-    shot = st.camera_input(T["cam_label"])
-
-source = uploaded or shot
-
+# style বাছাই আগে, উপরে — যাতে dropdown খোলার সময় নিচে যথেষ্ট জায়গা থাকে
 style_keys = list(STYLES.keys())
 lang_idx = 0 if st.session_state.lang == "bn" else 1
 style_choice = st.selectbox(
@@ -393,6 +386,14 @@ style_choice = st.selectbox(
 style_hint = STYLES[style_choice][2]
 
 extra = st.text_input(T["extra_label"], placeholder=T["extra_placeholder"])
+
+tab_up, tab_cam = st.tabs([T["tab_upload"], T["tab_cam"]])
+with tab_up:
+    uploaded = st.file_uploader(T["uploader_label"], type=["jpg", "jpeg", "png", "webp"])
+with tab_cam:
+    shot = st.camera_input(T["cam_label"])
+
+source = uploaded or shot
 
 if source is not None:
     file_id = f"{getattr(source, 'name', 'camera')}-{source.size}"
