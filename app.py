@@ -199,10 +199,7 @@ st.markdown(
         font-size: .9rem;
       }
 
-      div.st-key-make_row > div,
-      div.st-key-dl_row > div,
-      div.st-key-make_row [data-testid="stVerticalBlock"],
-      div.st-key-dl_row [data-testid="stVerticalBlock"] {
+      div:has(> .khb-btnrow-marker) + div {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -211,8 +208,7 @@ st.markdown(
         gap: 8px !important;
         width: 100% !important;
       }
-      div.st-key-make_row [data-testid="stVerticalBlock"] > div,
-      div.st-key-dl_row [data-testid="stVerticalBlock"] > div {
+      div:has(> .khb-btnrow-marker) + div > div {
         width: auto !important;
         flex: 0 0 auto !important;
       }
@@ -449,10 +445,13 @@ if photo_bytes is not None:
     st.image(base_img, caption=T["your_image"], use_container_width=True)
 
     left = MAX_RUNS_PER_SESSION - st.session_state.runs
-    with st.container(key="make_row"):
+    st.markdown('<div class="khb-btnrow-marker"></div>', unsafe_allow_html=True)
+    make_col, make_del_col = st.columns([3, 1])
+    with make_col:
         make_clicked = st.button(
             T["make_meme_btn"], type="primary", disabled=left <= 0, key="make_meme_btn"
         )
+    with make_del_col:
         delete_photo_clicked = st.button(T["delete_photo"], type="secondary", key="delete_photo_btn")
     if delete_photo_clicked:
         st.session_state.pop("photo_bytes", None)
@@ -491,7 +490,9 @@ if photo_bytes is not None:
 
         out = io.BytesIO()
         final.save(out, "PNG")
-        with st.container(key="dl_row"):
+        st.markdown('<div class="khb-btnrow-marker"></div>', unsafe_allow_html=True)
+        dl_col, dl_del_col = st.columns([3, 1])
+        with dl_col:
             st.download_button(
                 T["download_btn"],
                 data=out.getvalue(),
@@ -499,6 +500,7 @@ if photo_bytes is not None:
                 mime="image/png",
                 type="primary",
             )
+        with dl_del_col:
             delete_meme_clicked = st.button(T["delete_meme"], type="secondary", key="delete_meme_btn")
         if delete_meme_clicked:
             st.session_state.pop("memes", None)
