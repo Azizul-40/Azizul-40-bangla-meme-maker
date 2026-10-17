@@ -6,14 +6,15 @@ import os
 import re
 import urllib.request
 
-import anthropic
 import streamlit as st
+from google import genai
+from google.genai import types
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 # ---------------------------------------------------------------- settings
-MODEL = "claude-sonnet-5-5"
+DEFAULT_MODELS = ["gemini-flash-latest", "gemini-3.6-flash", "gemini-2.5-flash"]
 MAX_SIDE = 1024            # image is resized so it loads fast on mobile
-MAX_RUNS_PER_SESSION = 10  # protects your API key from abuse
+MAX_RUNS_PER_SESSION = 10  # protects your free quota from abuse
 
 FONT_URLS = [
     "https://github.com/google/fonts/raw/main/ofl/hindsiliguri/HindSiliguri-Bold.ttf",
@@ -81,9 +82,8 @@ def prepare_image(file_bytes: bytes) -> Image.Image:
 def get_captions(img: Image.Image, style_hint: str, extra: str):
     buf = io.BytesIO()
     img.save(buf, "JPEG", quality=85)
-    b64 = base64.b64encode(buf.getvalue()).decode()
 
-    client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
+    client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
     prompt = f"""Look at this image and write 5 different meme captions in Bangla (Bengali script).
 Tone: {style_hint}.
 {"Extra context from the user: " + extra if extra.strip() else ""}
@@ -95,30 +95,27 @@ Rules:
 - Reply with ONLY valid JSON, no extra text, in this shape:
 {{"memes": [{{"top": "...", "bottom": "..."}}]}}"""
 
-    resp = client.messages.create(
-        model=MODEL,
-        max_tokens=1000,
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image",
-                        "source": {"type": "base64", "media_type": "image/jpeg", "data": b64},
-                    },
-                    {"type": "text", "text": prompt},
+    models = [st.secrets["GEMINI_MODEL"]] if "GEMINI_MODEL" in st.secrets else DEFAULT_MODELS
+    last_error = None
+    for model in models:
+        try:
+            resp = client.models.generate_content(
+                model=model,
+                contents=[
+                    types.Part.from_bytes(data=buf.getvalue(), mime_type="image/jpeg"),
+                    prompt,
                 ],
-            }
-        ],
-    )
-    text = "".join(b.text for b in resp.content if b.type == "text")
-    match = re.search(r"\{.*\}", text, re.S)
-    data = json.loads(match.group(0))
-    memes = [
-        {"top": str(m.get("top", "")).strip(), "bottom": str(m.get("bottom", "")).strip()}
-        for m in data["memes"]
-    ]
-    return memes[:5]
+            )
+            match = re.search(r"\{.*\}", resp.text, re.S)
+            data = json.loads(match.group(0))
+            memes = [
+                {"top": str(m.get("top", "")).strip(), "bottom": str(m.get("bottom", "")).strip()}
+                for m in data["memes"]
+            ]
+            return memes[:5]
+        except Exception as e:  # try the next model name
+            last_error = e
+    raise last_error
 
 
 # ---------------------------------------------------------------- meme drawing
@@ -188,8 +185,8 @@ if font_path is None:
     )
     st.stop()
 
-if "ANTHROPIC_API_KEY" not in st.secrets:
-    st.error("Streamlit Secrets-এ `ANTHROPIC_API_KEY` যোগ করা হয়নি। README দেখো।")
+if "GEMINI_API_KEY" not in st.secrets:
+    st.error("Streamlit Secrets-এ `GEMINI_API_KEY` যোগ করা হয়নি। README দেখো।")
     st.stop()
 
 if "runs" not in st.session_state:
@@ -223,7 +220,7 @@ if source is not None:
                     if k.startswith(("top_", "bottom_")):
                         del st.session_state[k]
             except Exception as e:
-                st.error(f"কিছু একটা সমস্যা হয়েছে, আবার চেষ্টা করো। ({type(e).__name__})")
+                st.error(f"কিছু একটা সমস্যা হয়েছে, একটু পরে আবার চেষ্টা করো। ({type(e).__name__}: {str(e)[:150]})")
     if left <= 0:
         st.warning("এই session-এর limit শেষ। পেজ refresh করে আবার চেষ্টা করো।")
 
