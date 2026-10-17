@@ -119,10 +119,14 @@ st.markdown(
         font-family: 'Hind Siliguri', sans-serif;
       }
 
+      html, body {
+        overflow-x: hidden !important;
+      }
       .block-container {
         padding-top: 1rem;
         padding-bottom: 3rem;
         max-width: 720px;
+        overflow-x: hidden;
       }
 
       .khb-header {
@@ -195,18 +199,20 @@ st.markdown(
         font-size: .9rem;
       }
 
-      div.st-key-make_row div[data-testid="stHorizontalBlock"],
-      div.st-key-dl_row div[data-testid="stHorizontalBlock"] {
+      div.st-key-make_row div[data-testid="stVerticalBlock"],
+      div.st-key-dl_row div[data-testid="stVerticalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
         flex-wrap: nowrap !important;
-        gap: 8px !important;
         justify-content: space-between !important;
         align-items: center !important;
+        gap: 8px !important;
+        width: 100% !important;
       }
-      div.st-key-make_row div[data-testid="column"],
-      div.st-key-dl_row div[data-testid="column"] {
+      div.st-key-make_row div[data-testid="stVerticalBlock"] > div[data-testid="element-container"],
+      div.st-key-dl_row div[data-testid="stVerticalBlock"] > div[data-testid="element-container"] {
         width: auto !important;
         flex: 0 0 auto !important;
-        min-width: 0 !important;
       }
 
       .stTabs [data-baseweb="tab"] {
@@ -442,17 +448,15 @@ if photo_bytes is not None:
 
     left = MAX_RUNS_PER_SESSION - st.session_state.runs
     with st.container(key="make_row"):
-        make_col, make_del_col = st.columns([3, 1])
-        with make_col:
-            make_clicked = st.button(
-                T["make_meme_btn"], type="primary", disabled=left <= 0, key="make_meme_btn"
-            )
-        with make_del_col:
-            if st.button(T["delete_photo"], type="secondary", key="delete_photo_btn"):
-                st.session_state.pop("photo_bytes", None)
-                st.session_state.pop("file_id", None)
-                st.session_state.pop("memes", None)
-                st.rerun()
+        make_clicked = st.button(
+            T["make_meme_btn"], type="primary", disabled=left <= 0, key="make_meme_btn"
+        )
+        delete_photo_clicked = st.button(T["delete_photo"], type="secondary", key="delete_photo_btn")
+    if delete_photo_clicked:
+        st.session_state.pop("photo_bytes", None)
+        st.session_state.pop("file_id", None)
+        st.session_state.pop("memes", None)
+        st.rerun()
 
     if make_clicked:
         with st.spinner(T["thinking"]):
@@ -486,19 +490,17 @@ if photo_bytes is not None:
         out = io.BytesIO()
         final.save(out, "PNG")
         with st.container(key="dl_row"):
-            dl_col, dl_del_col = st.columns([3, 1])
-            with dl_col:
-                st.download_button(
-                    T["download_btn"],
-                    data=out.getvalue(),
-                    file_name="bangla_meme.png",
-                    mime="image/png",
-                    type="primary",
-                )
-            with dl_del_col:
-                if st.button(T["delete_meme"], type="secondary", key="delete_meme_btn"):
-                    st.session_state.pop("memes", None)
-                    st.rerun()
+            st.download_button(
+                T["download_btn"],
+                data=out.getvalue(),
+                file_name="bangla_meme.png",
+                mime="image/png",
+                type="primary",
+            )
+            delete_meme_clicked = st.button(T["delete_meme"], type="secondary", key="delete_meme_btn")
+        if delete_meme_clicked:
+            st.session_state.pop("memes", None)
+            st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 else:
     st.info(T["start_info"])
