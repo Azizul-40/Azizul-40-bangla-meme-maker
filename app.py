@@ -62,7 +62,7 @@ TEXT = {
         "bottom_text": "নিচের লেখা",
         "download_btn": "⬇️ Meme download করো",
         "start_info": "শুরু করতে একটা ছবি upload করো বা camera দিয়ে তোলো।",
-        "footer": "Khela Hobe 😂<br>Developed with ❤️ by",
+        "footer": "Khela Hobe 😂<br>Developed by",
         "font_error": (
             "বাংলা font পাওয়া যায়নি। GitHub repo-র `fonts/` folder-এ একটা বাংলা .ttf font "
             "(যেমন HindSiliguri-Bold.ttf বা NotoSansBengali-Bold.ttf) রাখো।"
@@ -92,7 +92,7 @@ TEXT = {
         "bottom_text": "Bottom text",
         "download_btn": "⬇️ Download meme",
         "start_info": "Upload a photo or take one with the camera to start.",
-        "footer": "Khela Hobe 😂<br>Developed with ❤️ by",
+        "footer": "Khela Hobe 😂<br>Developed by",
         "font_error": (
             "Bangla font not found. Put a Bangla .ttf font (e.g. HindSiliguri-Bold.ttf or "
             "NotoSansBengali-Bold.ttf) in the `fonts/` folder of the GitHub repo."
