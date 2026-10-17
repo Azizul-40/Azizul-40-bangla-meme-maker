@@ -214,10 +214,21 @@ st.markdown(
         border-radius: 10px 10px 0 0;
       }
 
-      /* app-এ secondary বাটন মানেই "Delete" বাটন (আর কোথাও secondary বাটন
-         নেই) — তাই এই selector শুধু এই দুটো row-কেই ধরে, বাকি layout (ভাষা
-         switcher, ছবি ইত্যাদি) অক্ষত থাকে। */
-      div[data-testid="stHorizontalBlock"]:has(button[kind="secondary"]) {
+      /* ভাষা switcher-কে ডানে align করার জন্য (st.columns ছাড়াই) */
+      .khb-langrow {
+        display: flex !important;
+        justify-content: flex-end !important;
+      }
+      .khb-langrow div[data-testid="stRadio"] {
+        width: auto !important;
+      }
+
+      /* পুরো app-এ st.columns শুধু এই দুটো Delete-বাটন row-তেই ব্যবহার করা
+         হয় (ভাষা switcher উপরেই plain flexbox দিয়ে করা, columns দিয়ে না),
+         তাই কোনো :has() ছাড়া সরাসরি সব stHorizontalBlock-কেই flex-row করে
+         দিলে বাকি কিছু ভাঙে না — আর :has() পুরনো Android WebView-তে কাজ নাও
+         করতে পারে, তাই এভাবে বেশি নিরাপদ। */
+      div[data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -226,7 +237,7 @@ st.markdown(
         gap: .6rem !important;
         width: 100% !important;
       }
-      div[data-testid="stHorizontalBlock"]:has(button[kind="secondary"]) > div[data-testid="column"] {
+      div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
         width: auto !important;
         min-width: fit-content !important;
         flex: 0 0 auto !important;
@@ -383,18 +394,21 @@ def make_meme(base_img, top, bottom, font_path):
 
 
 # ---------------------------------------------------------------- UI
-_lang_col1, _lang_col2 = st.columns([3, 1])
-with _lang_col2:
-    lang_choice = st.radio(
-        "lang",
-        options=["bn", "en"],
-        format_func=lambda x: "বাং" if x == "bn" else "EN",
-        horizontal=True,
-        label_visibility="collapsed",
-        index=0 if st.session_state.lang == "bn" else 1,
-        key="lang_switch",
-    )
-    st.session_state.lang = lang_choice
+# (এখানে st.columns ব্যবহার করা হচ্ছে না, কারণ Streamlit-এর columns mobile/
+#  WebView-তে নিজে থেকে vertically stack হয়ে যায়। তাই plain div + flexbox
+#  দিয়ে ডানে align করা হয়েছে।)
+st.markdown('<div class="khb-langrow">', unsafe_allow_html=True)
+lang_choice = st.radio(
+    "lang",
+    options=["bn", "en"],
+    format_func=lambda x: "বাং" if x == "bn" else "EN",
+    horizontal=True,
+    label_visibility="collapsed",
+    index=0 if st.session_state.lang == "bn" else 1,
+    key="lang_switch",
+)
+st.session_state.lang = lang_choice
+st.markdown('</div>', unsafe_allow_html=True)
 
 T = TEXT[st.session_state.lang]
 
