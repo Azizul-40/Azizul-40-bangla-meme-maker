@@ -81,8 +81,11 @@ def prepare_image(file_bytes: bytes) -> Image.Image:
 
 
 def get_captions(img: Image.Image, style_hint: str, extra: str):
+    # smaller image = faster upload and faster AI reply
+    small = img.copy()
+    small.thumbnail((640, 640))
     buf = io.BytesIO()
-    img.save(buf, "JPEG", quality=85)
+    small.save(buf, "JPEG", quality=80)
 
     client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
     prompt = f"""Look at this image and write 5 different meme captions in Bangla (Bengali script).
@@ -97,25 +100,37 @@ Rules:
 {{"memes": [{{"top": "...", "bottom": "..."}}]}}"""
 
     models = [st.secrets["GEMINI_MODEL"]] if "GEMINI_MODEL" in st.secrets else DEFAULT_MODELS
+    # first try the fast setting (no long "thinking", JSON output), then a plain call
+    configs = [
+        types.GenerateContentConfig(
+            response_mime_type="application/json",
+            max_output_tokens=600,
+            thinking_config=types.ThinkingConfig(thinking_budget=0),
+        ),
+        types.GenerateContentConfig(response_mime_type="application/json", max_output_tokens=800),
+        None,
+    ]
     last_error = None
     for model in models:
-        try:
-            resp = client.models.generate_content(
-                model=model,
-                contents=[
-                    types.Part.from_bytes(data=buf.getvalue(), mime_type="image/jpeg"),
-                    prompt,
-                ],
-            )
-            match = re.search(r"\{.*\}", resp.text, re.S)
-            data = json.loads(match.group(0))
-            memes = [
-                {"top": str(m.get("top", "")).strip(), "bottom": str(m.get("bottom", "")).strip()}
-                for m in data["memes"]
-            ]
-            return memes[:5]
-        except Exception as e:  # try the next model name
-            last_error = e
+        for cfg in configs:
+            try:
+                resp = client.models.generate_content(
+                    model=model,
+                    contents=[
+                        types.Part.from_bytes(data=buf.getvalue(), mime_type="image/jpeg"),
+                        prompt,
+                    ],
+                    config=cfg,
+                )
+                match = re.search(r"\{.*\}", resp.text, re.S)
+                data = json.loads(match.group(0))
+                memes = [
+                    {"top": str(m.get("top", "")).strip(), "bottom": str(m.get("bottom", "")).strip()}
+                    for m in data["memes"]
+                ]
+                return memes[:5]
+            except Exception as e:  # try the next setting / model
+                last_error = e
     raise last_error
 
 
