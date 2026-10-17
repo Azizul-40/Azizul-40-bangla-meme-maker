@@ -52,7 +52,8 @@ TEXT = {
         "extra_placeholder": "যেমন: রেজাল্ট দেওয়ার দিন আমি",
         "your_image": "তোমার ছবি",
         "make_meme_btn": "✨ Meme বানাও",
-        "thinking": "AI caption ভাবছে...",
+        "thinking": "Generating...",
+        "delete_photo": "🗑️ ছবি মুছে ফেলো",
         "error_prefix": "কিছু একটা সমস্যা হয়েছে, একটু পরে আবার চেষ্টা করো।",
         "limit_warning": "এই session-এর limit শেষ। পেজ refresh করে আবার চেষ্টা করো।",
         "your_meme": "তোমার Meme",
@@ -82,7 +83,8 @@ TEXT = {
         "extra_placeholder": "e.g. me on result day",
         "your_image": "Your photo",
         "make_meme_btn": "✨ Make meme",
-        "thinking": "AI is thinking of captions...",
+        "thinking": "Generating...",
+        "delete_photo": "🗑️ Delete photo",
         "error_prefix": "Something went wrong, try again in a bit.",
         "limit_warning": "This session's limit is over. Refresh the page and try again.",
         "your_meme": "Your meme",
@@ -389,19 +391,33 @@ extra = st.text_input(T["extra_label"], placeholder=T["extra_placeholder"])
 
 tab_up, tab_cam = st.tabs([T["tab_upload"], T["tab_cam"]])
 with tab_up:
-    uploaded = st.file_uploader(T["uploader_label"], type=["jpg", "jpeg", "png", "webp"])
+    uploaded = st.file_uploader(T["uploader_label"], type=["jpg", "jpeg", "png", "webp"], key="uploader")
 with tab_cam:
-    shot = st.camera_input(T["cam_label"])
+    shot = st.camera_input(T["cam_label"], key="camera")
 
-source = uploaded or shot
-
-if source is not None:
-    file_id = f"{getattr(source, 'name', 'camera')}-{source.size}"
+# নতুন ছবি এলেই session_state-এ bytes আকারে সেভ করে রাখি, যাতে পরে
+# category/style বদলালে (rerun হলেও) ছবিটা হারিয়ে না যায়
+new_source = uploaded or shot
+if new_source is not None:
+    file_id = f"{getattr(new_source, 'name', 'camera')}-{new_source.size}"
     if st.session_state.get("file_id") != file_id:
         st.session_state.file_id = file_id
+        st.session_state.photo_bytes = new_source.getvalue()
         st.session_state.pop("memes", None)
-    base_img = prepare_image(source.getvalue())
-    st.image(base_img, caption=T["your_image"], use_container_width=True)
+
+photo_bytes = st.session_state.get("photo_bytes")
+
+if photo_bytes is not None:
+    base_img = prepare_image(photo_bytes)
+    img_col, del_col = st.columns([5, 1])
+    with img_col:
+        st.image(base_img, caption=T["your_image"], use_container_width=True)
+    with del_col:
+        if st.button(T["delete_photo"], key="delete_photo_btn"):
+            st.session_state.pop("photo_bytes", None)
+            st.session_state.pop("file_id", None)
+            st.session_state.pop("memes", None)
+            st.rerun()
 
     left = MAX_RUNS_PER_SESSION - st.session_state.runs
     if st.button(T["make_meme_btn"], type="primary", disabled=left <= 0):
