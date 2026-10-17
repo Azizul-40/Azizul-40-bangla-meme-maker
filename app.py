@@ -195,13 +195,15 @@ st.markdown(
         font-size: .9rem;
       }
 
-      div[data-testid="stHorizontalBlock"] {
+      div.st-key-make_row div[data-testid="stHorizontalBlock"],
+      div.st-key-dl_row div[data-testid="stHorizontalBlock"] {
         flex-wrap: nowrap !important;
         gap: 8px !important;
         justify-content: space-between !important;
         align-items: center !important;
       }
-      div[data-testid="stHorizontalBlock"] div[data-testid="column"] {
+      div.st-key-make_row div[data-testid="column"],
+      div.st-key-dl_row div[data-testid="column"] {
         width: auto !important;
         flex: 0 0 auto !important;
         min-width: 0 !important;
@@ -439,17 +441,18 @@ if photo_bytes is not None:
     st.image(base_img, caption=T["your_image"], use_container_width=True)
 
     left = MAX_RUNS_PER_SESSION - st.session_state.runs
-    make_col, make_del_col = st.columns([3, 1])
-    with make_col:
-        make_clicked = st.button(
-            T["make_meme_btn"], type="primary", disabled=left <= 0, key="make_meme_btn"
-        )
-    with make_del_col:
-        if st.button(T["delete_photo"], type="secondary", key="delete_photo_btn"):
-            st.session_state.pop("photo_bytes", None)
-            st.session_state.pop("file_id", None)
-            st.session_state.pop("memes", None)
-            st.rerun()
+    with st.container(key="make_row"):
+        make_col, make_del_col = st.columns([3, 1])
+        with make_col:
+            make_clicked = st.button(
+                T["make_meme_btn"], type="primary", disabled=left <= 0, key="make_meme_btn"
+            )
+        with make_del_col:
+            if st.button(T["delete_photo"], type="secondary", key="delete_photo_btn"):
+                st.session_state.pop("photo_bytes", None)
+                st.session_state.pop("file_id", None)
+                st.session_state.pop("memes", None)
+                st.rerun()
 
     if make_clicked:
         with st.spinner(T["thinking"]):
@@ -482,19 +485,20 @@ if photo_bytes is not None:
 
         out = io.BytesIO()
         final.save(out, "PNG")
-        dl_col, dl_del_col = st.columns([3, 1])
-        with dl_col:
-            st.download_button(
-                T["download_btn"],
-                data=out.getvalue(),
-                file_name="bangla_meme.png",
-                mime="image/png",
-                type="primary",
-            )
-        with dl_del_col:
-            if st.button(T["delete_meme"], type="secondary", key="delete_meme_btn"):
-                st.session_state.pop("memes", None)
-                st.rerun()
+        with st.container(key="dl_row"):
+            dl_col, dl_del_col = st.columns([3, 1])
+            with dl_col:
+                st.download_button(
+                    T["download_btn"],
+                    data=out.getvalue(),
+                    file_name="bangla_meme.png",
+                    mime="image/png",
+                    type="primary",
+                )
+            with dl_del_col:
+                if st.button(T["delete_meme"], type="secondary", key="delete_meme_btn"):
+                    st.session_state.pop("memes", None)
+                    st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 else:
     st.info(T["start_info"])
