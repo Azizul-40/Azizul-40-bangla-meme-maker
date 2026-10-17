@@ -29,6 +29,10 @@ STYLES = {
     "cricket": ("🏏 ক্রিকেট ফ্যান", "🏏 Cricket fan", "like a Bangladeshi cricket fan reacting"),
     "student": ("📚 ছাত্রজীবন", "📚 Student life", "relatable to a Bangladeshi university student (exam, assignment, result)"),
     "mom": ("👩 দেশি আম্মু", "👩 Desi mom", "like a desi Bangladeshi mom commenting on it"),
+    "sad": ("😢 স্যাড", "😢 Sad", "sad and melancholic, a bit dramatic and emotional, like a heartbroken Bangla status"),
+    "chill": ("😎 চিল", "😎 Chill", "super relaxed, laid-back, unbothered, nothing-matters chill vibe"),
+    "dad": ("👨 দেশি বাবা", "👨 Desi dad", "like a strict but caring desi Bangladeshi dad making a dry, no-nonsense remark"),
+    "auntie": ("👀 পাশের বাসার আন্টি", "👀 Next-door auntie", "like a nosy, gossiping Bangladeshi neighborhood auntie commenting with mock concern"),
 }
 
 # ---------------------------------------------------------------- UI text (bangla / english)
